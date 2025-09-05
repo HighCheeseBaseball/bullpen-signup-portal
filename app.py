@@ -850,18 +850,6 @@ def admin_page():
         - **Status:** {'✅ Configured' if EMAIL_CONFIG['app_password'] else '❌ Not configured'}
         """)
         
-        st.markdown("**Setup Instructions:**")
-        st.markdown("""
-        1. **Enable 2-Factor Authentication** on your Gmail account
-        2. **Generate an App Password:**
-           - Go to [Google Account Settings](https://myaccount.google.com/)
-           - Click "Security" → "2-Step Verification" → "App passwords"
-           - Generate a new app password for "Mail"
-        3. **Update the app password** in the code (line 113 in app.py)
-        4. **Test the email** by making a test sign-up
-        """)
-        
-        st.warning("⚠️ **Security Note:** The app password is currently stored in the code. For production, consider using environment variables or Streamlit secrets.")
         
         if st.button("Test Email Configuration"):
             test_data = {
@@ -893,7 +881,7 @@ def main():
     else:
         # Simple password protection for admin
         admin_password = st.sidebar.text_input("Admin Password", type="password")
-        if admin_password == "CSPbaseball123":  # Change this to a more secure password
+        if admin_password == "admin123":  # Change this to a more secure password
             admin_page()
         elif admin_password:
             st.error("Incorrect password")
@@ -901,5 +889,4 @@ def main():
             st.info("Enter admin password to access dashboard")
 
 if __name__ == "__main__":
-
     main()
