@@ -499,51 +499,69 @@ This is an automated notification from the Bullpen Sign-up Portal.
 
 def display_logo():
     """Display logo based on current theme (dark/light mode)"""
-    # Use JavaScript to dynamically switch logos based on theme
+    # Use JavaScript to detect background color and switch logos accordingly
     st.markdown("""
     <script>
+    function getBackgroundColor(element) {
+        const style = window.getComputedStyle(element);
+        return style.backgroundColor;
+    }
+    
+    function isLightBackground(color) {
+        // Convert RGB to brightness value
+        if (color.includes('rgb')) {
+            const rgb = color.match(/\\d+/g);
+            if (rgb && rgb.length >= 3) {
+                const r = parseInt(rgb[0]);
+                const g = parseInt(rgb[1]);
+                const b = parseInt(rgb[2]);
+                // Calculate brightness using luminance formula
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                return brightness > 128; // If brightness > 128, it's light
+            }
+        }
+        // Fallback: check for common light colors
+        return color.includes('rgb(255, 255, 255)') || 
+               color.includes('#ffffff') || 
+               color.includes('white') ||
+               color.includes('rgb(248, 249, 250)') || // Light gray
+               color.includes('#f8f9fa');
+    }
+    
     function updateLogo() {
         const logoImg = document.querySelector('.logo-container img');
         if (!logoImg) return;
         
-        // Check if we're in light mode by looking at various indicators
+        // Get background color from the main app container
+        const app = document.querySelector('[data-testid="stApp"]') || document.querySelector('.stApp') || document.body;
         const body = document.body;
-        const app = document.querySelector('[data-testid="stApp"]') || document.querySelector('.stApp');
         
-        // Multiple ways to detect light mode
-        const isLightMode = 
-            // Check if body has light background
-            window.getComputedStyle(body).backgroundColor.includes('rgb(255, 255, 255)') ||
-            window.getComputedStyle(body).backgroundColor.includes('#ffffff') ||
-            window.getComputedStyle(body).backgroundColor.includes('white') ||
-            // Check if app has light background
-            (app && (
-                window.getComputedStyle(app).backgroundColor.includes('rgb(255, 255, 255)') ||
-                window.getComputedStyle(app).backgroundColor.includes('#ffffff') ||
-                window.getComputedStyle(app).backgroundColor.includes('white')
-            )) ||
-            // Check for light mode classes or attributes
-            body.classList.contains('light') ||
-            app && app.getAttribute('data-theme') === 'light' ||
-            // Check media query
-            window.matchMedia('(prefers-color-scheme: light)').matches;
+        // Check both app and body background colors
+        const appBg = getBackgroundColor(app);
+        const bodyBg = getBackgroundColor(body);
         
-        // Update logo based on theme
+        // Determine if we're in light mode based on background color
+        const isLightMode = isLightBackground(appBg) || isLightBackground(bodyBg);
+        
+        // Update logo based on background color
         if (isLightMode) {
             logoImg.src = 'cressey_logo_light.png';
         } else {
             logoImg.src = 'cressey_logo.png';
         }
+        
+        // Debug info (you can remove this later)
+        console.log('App background:', appBg, 'Body background:', bodyBg, 'Is light:', isLightMode);
     }
     
     // Run on page load
     document.addEventListener('DOMContentLoaded', updateLogo);
     
-    // Run when theme changes
+    // Run when any style changes occur
     const observer = new MutationObserver(updateLogo);
     observer.observe(document.body, { 
         attributes: true, 
-        attributeFilter: ['class', 'style', 'data-theme'],
+        attributeFilter: ['class', 'style'],
         subtree: true 
     });
     
@@ -552,12 +570,12 @@ def display_logo():
     if (app) {
         observer.observe(app, { 
             attributes: true, 
-            attributeFilter: ['class', 'style', 'data-theme'] 
+            attributeFilter: ['class', 'style'] 
         });
     }
     
     // Run periodically to catch any missed changes
-    setInterval(updateLogo, 1000);
+    setInterval(updateLogo, 2000);
     </script>
     """, unsafe_allow_html=True)
     
