@@ -565,7 +565,7 @@ def display_logo():
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-        st.image("cressey_logo.png", width=400, key="dynamic_logo")  # Default logo (will be updated by JavaScript)
+        st.image("cressey_logo.png", width=400)  # Default logo (will be updated by JavaScript)
         st.markdown('</div>', unsafe_allow_html=True)
 
 def athlete_sign_up_page():
