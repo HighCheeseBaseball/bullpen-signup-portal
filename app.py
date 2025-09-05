@@ -211,6 +211,53 @@ def is_within_cutoff(preferred_date: datetime.date, cutoff_hours: int) -> bool:
     preferred_datetime = datetime.datetime.combine(preferred_date, datetime.time.min)
     return preferred_datetime >= cutoff_time
 
+def is_time_slot_within_cutoff(preferred_date: datetime.date, preferred_time: str, cutoff_hours: int) -> bool:
+    """Check if the specific date and time combination is within the cutoff period"""
+    now = datetime.datetime.now()
+    cutoff_time = now + timedelta(hours=cutoff_hours)
+    
+    # Parse the preferred time
+    try:
+        # Handle various time formats (e.g., "9:30AM", "9:30 AM", "09:30 AM")
+        time_str = preferred_time.strip().upper()
+        
+        # Remove AM/PM and extract time
+        if 'AM' in time_str:
+            time_part = time_str.replace('AM', '').strip()
+            is_pm = False
+        elif 'PM' in time_str:
+            time_part = time_str.replace('PM', '').strip()
+            is_pm = True
+        else:
+            # Assume AM if no AM/PM specified
+            time_part = time_str
+            is_pm = False
+        
+        # Parse hour and minute
+        if ':' in time_part:
+            hour, minute = time_part.split(':')
+            hour = int(hour.strip())
+            minute = int(minute.strip())
+        else:
+            hour = int(time_part.strip())
+            minute = 0
+        
+        # Convert to 24-hour format
+        if is_pm and hour != 12:
+            hour += 12
+        elif not is_pm and hour == 12:
+            hour = 0
+        
+        # Create datetime object
+        preferred_datetime = datetime.datetime.combine(preferred_date, datetime.time(hour, minute))
+        
+        # Check if it's within cutoff
+        return preferred_datetime >= cutoff_time
+        
+    except (ValueError, IndexError):
+        # If time parsing fails, return False (invalid time format)
+        return False
+
 def get_available_slots(preferred_date: datetime.date, time_slots: List[str], 
                        sign_ups_df: pd.DataFrame, max_per_slot: int) -> Dict[str, int]:
     """Get available slots for a given date"""
@@ -319,14 +366,20 @@ def add_sign_up_to_google_sheets(sign_up_data: Dict):
         if not worksheet:
             return False
         
+        # Convert UTC time to Eastern Time for display
+        import pytz
+        utc_time = sign_up_data['signup_date']
+        eastern = pytz.timezone('US/Eastern')
+        local_time = utc_time.replace(tzinfo=pytz.UTC).astimezone(eastern)
+        
         # Format the data for Google Sheets
         row_data = [
             sign_up_data['athlete_name'],
             sign_up_data['email'],
             sign_up_data['phone'],
             sign_up_data['coach'],
-            sign_up_data['signup_date'].strftime('%m/%d/%Y'),
-            sign_up_data['signup_date'].strftime('%I:%M %p'),
+            local_time.strftime('%m/%d/%Y'),
+            local_time.strftime('%I:%M %p'),
             sign_up_data['preferred_date'].strftime('%m/%d/%Y'),
             sign_up_data['preferred_time'],
             sign_up_data['notes']
@@ -362,13 +415,19 @@ def sync_all_sign_ups_to_google_sheets():
         
         # Add all sign-ups
         for _, row in sign_ups_df.iterrows():
+            # Convert UTC time to Eastern Time for display
+            import pytz
+            utc_time = row['signup_date']
+            eastern = pytz.timezone('US/Eastern')
+            local_time = utc_time.replace(tzinfo=pytz.UTC).astimezone(eastern)
+            
             row_data = [
                 row['athlete_name'],
                 row['email'],
                 row['phone'],
                 row['coach'],
-                row['signup_date'].strftime('%m/%d/%Y'),
-                row['signup_date'].strftime('%I:%M %p'),
+                local_time.strftime('%m/%d/%Y'),
+                local_time.strftime('%I:%M %p'),
                 row['preferred_date'].strftime('%m/%d/%Y'),
                 row['preferred_time'],
                 row.get('notes', '')  # Use get() to handle existing data without notes
@@ -503,6 +562,11 @@ def athlete_sign_up_page():
             # Validation
             if not all([athlete_name, phone, coach, selected_time]):
                 st.error("Please fill in all required fields (Name, Phone, Coach, and Time).")
+                return
+            
+            # Check if the selected time slot is within the cutoff period
+            if not is_time_slot_within_cutoff(selected_date, selected_time, settings['cutoff_hours']):
+                st.error(f"❌ Cannot sign up for {selected_time} on {selected_date.strftime('%A, %B %d, %Y')}. You must sign up at least {settings['cutoff_hours']} hours in advance.")
                 return
             
             # Add new sign-up
@@ -881,7 +945,7 @@ def main():
     else:
         # Simple password protection for admin
         admin_password = st.sidebar.text_input("Admin Password", type="password")
-        if admin_password == "CSPbaseball123":  # Change this to a more secure password
+        if admin_password == "admin123":  # Change this to a more secure password
             admin_page()
         elif admin_password:
             st.error("Incorrect password")
@@ -889,5 +953,4 @@ def main():
             st.info("Enter admin password to access dashboard")
 
 if __name__ == "__main__":
-
     main()
