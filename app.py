@@ -11,6 +11,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import pytz
 
 # Set page config
 st.set_page_config(
@@ -201,7 +202,6 @@ def save_sign_ups(df: pd.DataFrame):
 def is_within_cutoff(preferred_date: datetime.date, cutoff_hours: int) -> bool:
     """Check if the preferred date is within the cutoff period"""
     # Use Eastern timezone for consistent calculations
-    import pytz
     eastern = pytz.timezone('US/Eastern')
     now = datetime.datetime.now(eastern)
     cutoff_time = now + timedelta(hours=cutoff_hours)
@@ -217,7 +217,6 @@ def is_within_cutoff(preferred_date: datetime.date, cutoff_hours: int) -> bool:
 def is_time_slot_within_cutoff(preferred_date: datetime.date, preferred_time: str, cutoff_hours: int) -> bool:
     """Check if the specific date and time combination is within the cutoff period"""
     # Use Eastern timezone for consistent calculations
-    import pytz
     eastern = pytz.timezone('US/Eastern')
     now = datetime.datetime.now(eastern)
     cutoff_time = now + timedelta(hours=cutoff_hours)
@@ -286,7 +285,6 @@ def is_past_slot(preferred_date: datetime.date, time_slot: str) -> bool:
     slot_time = datetime.datetime.strptime(time_slot, "%I:%M %p").time()
     slot_datetime = datetime.datetime.combine(preferred_date, slot_time)
     # Use Eastern timezone for consistent calculations
-    import pytz
     eastern = pytz.timezone('US/Eastern')
     return slot_datetime < datetime.datetime.now(eastern)
 
