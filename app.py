@@ -14,7 +14,7 @@ from email.mime.multipart import MIMEMultipart
 
 # Set page config
 st.set_page_config(
-    page_title="Bullpen Signup Portal",
+    page_title="Bullpen Sign-up Portal",
     page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -148,8 +148,8 @@ def save_settings(settings: Dict):
     with open(SETTINGS_FILE, 'w') as f:
         json.dump(settings, f, indent=2)
 
-def load_signups() -> pd.DataFrame:
-    """Load signups from CSV file or create empty DataFrame"""
+def load_sign_ups() -> pd.DataFrame:
+    """Load sign-ups from CSV file or create empty DataFrame"""
     if os.path.exists(SIGNUPS_FILE):
         try:
             df = pd.read_csv(SIGNUPS_FILE)
@@ -175,7 +175,7 @@ def load_signups() -> pd.DataFrame:
                 df['preferred_date'] = pd.to_datetime([])
             return df
         except Exception as e:
-            print(f"Error loading signups: {e}")
+            print(f"Error loading sign-ups: {e}")
             # Create empty DataFrame with proper datetime columns
             df = pd.DataFrame(columns=[
                 'athlete_name', 'email', 'phone', 'coach', 'signup_date',
@@ -194,8 +194,8 @@ def load_signups() -> pd.DataFrame:
     df['preferred_date'] = pd.to_datetime([])
     return df
 
-def save_signups(df: pd.DataFrame):
-    """Save signups to CSV file"""
+def save_sign_ups(df: pd.DataFrame):
+    """Save sign-ups to CSV file"""
     df.to_csv(SIGNUPS_FILE, index=False)
 
 def is_within_cutoff(preferred_date: datetime.date, cutoff_hours: int) -> bool:
@@ -212,16 +212,16 @@ def is_within_cutoff(preferred_date: datetime.date, cutoff_hours: int) -> bool:
     return preferred_datetime >= cutoff_time
 
 def get_available_slots(preferred_date: datetime.date, time_slots: List[str], 
-                       signups_df: pd.DataFrame, max_per_slot: int) -> Dict[str, int]:
+                       sign_ups_df: pd.DataFrame, max_per_slot: int) -> Dict[str, int]:
     """Get available slots for a given date"""
     available = {}
     
     for time_slot in time_slots:
         # Count current signups for this date and time
-        current_signups = len(signups_df[
-            (signups_df['preferred_date'].dt.date == preferred_date) & 
-            (signups_df['preferred_time'] == time_slot) &
-            (signups_df['status'] == 'confirmed')
+        current_signups = len(sign_ups_df[
+            (sign_ups_df['preferred_date'].dt.date == preferred_date) & 
+            (sign_ups_df['preferred_time'] == time_slot) &
+            (sign_ups_df['status'] == 'confirmed')
         ])
         
         available[time_slot] = max(0, max_per_slot - current_signups)
@@ -298,7 +298,7 @@ def get_google_sheet():
                 cols=10
             )
             # Add headers
-            headers = ['Athlete Name', 'Email', 'Phone', 'Coach', 'Signup Date', 'Signup Time', 'Preferred Date', 'Preferred Time', 'Notes']
+            headers = ['Athlete Name', 'Email', 'Phone', 'Coach', 'Sign-up Date', 'Sign-up Time', 'Preferred Date', 'Preferred Time', 'Notes']
             worksheet.append_row(headers)
         
         return sheet, worksheet
@@ -312,8 +312,8 @@ def get_google_sheet():
         st.error(f"Error accessing Google Sheet: {str(e)}")
         return None, None
 
-def add_signup_to_google_sheets(signup_data: Dict):
-    """Add a new signup to Google Sheets"""
+def add_sign_up_to_google_sheets(sign_up_data: Dict):
+    """Add a new sign-up to Google Sheets"""
     try:
         sheet, worksheet = get_google_sheet()
         if not worksheet:
@@ -321,15 +321,15 @@ def add_signup_to_google_sheets(signup_data: Dict):
         
         # Format the data for Google Sheets
         row_data = [
-            signup_data['athlete_name'],
-            signup_data['email'],
-            signup_data['phone'],
-            signup_data['coach'],
-            signup_data['signup_date'].strftime('%m/%d/%Y'),
-            signup_data['signup_date'].strftime('%I:%M %p'),
-            signup_data['preferred_date'].strftime('%m/%d/%Y'),
-            signup_data['preferred_time'],
-            signup_data['notes']
+            sign_up_data['athlete_name'],
+            sign_up_data['email'],
+            sign_up_data['phone'],
+            sign_up_data['coach'],
+            sign_up_data['signup_date'].strftime('%m/%d/%Y'),
+            sign_up_data['signup_date'].strftime('%I:%M %p'),
+            sign_up_data['preferred_date'].strftime('%m/%d/%Y'),
+            sign_up_data['preferred_time'],
+            sign_up_data['notes']
         ]
         
         # Add the row
@@ -339,14 +339,14 @@ def add_signup_to_google_sheets(signup_data: Dict):
         st.error(f"Google Sheets API Error: {str(e)}")
         return False
     except Exception as e:
-        st.error(f"Error adding signup to Google Sheets: {str(e)}")
+        st.error(f"Error adding sign-up to Google Sheets: {str(e)}")
         return False
 
-def sync_all_signups_to_google_sheets():
-    """Sync all existing signups to Google Sheets"""
+def sync_all_sign_ups_to_google_sheets():
+    """Sync all existing sign-ups to Google Sheets"""
     try:
-        signups_df = load_signups()
-        if signups_df.empty:
+        sign_ups_df = load_sign_ups()
+        if sign_ups_df.empty:
             return True
         
         sheet, worksheet = get_google_sheet()
@@ -357,11 +357,11 @@ def sync_all_signups_to_google_sheets():
         worksheet.clear()
         
         # Add headers
-        headers = ['Athlete Name', 'Email', 'Phone', 'Coach', 'Signup Date', 'Signup Time', 'Preferred Date', 'Preferred Time', 'Notes']
+        headers = ['Athlete Name', 'Email', 'Phone', 'Coach', 'Sign-up Date', 'Sign-up Time', 'Preferred Date', 'Preferred Time', 'Notes']
         worksheet.append_row(headers)
         
-        # Add all signups
-        for _, row in signups_df.iterrows():
+        # Add all sign-ups
+        for _, row in sign_ups_df.iterrows():
             row_data = [
                 row['athlete_name'],
                 row['email'],
@@ -380,8 +380,8 @@ def sync_all_signups_to_google_sheets():
         st.error(f"Error syncing to Google Sheets: {str(e)}")
         return False
 
-def send_signup_notification(signup_data: Dict):
-    """Send email notification for new signup"""
+def send_sign_up_notification(sign_up_data: Dict):
+    """Send email notification for new sign-up"""
     try:
         # Get app password from Streamlit secrets or config
         app_password = st.secrets.get("GMAIL_APP_PASSWORD", EMAIL_CONFIG["app_password"])
@@ -395,31 +395,31 @@ def send_signup_notification(signup_data: Dict):
         msg = MIMEMultipart()
         msg['From'] = EMAIL_CONFIG["sender_email"]
         msg['To'] = EMAIL_CONFIG["recipient_email"]
-        msg['Subject'] = f"New Bullpen Signup - {signup_data['athlete_name']}"
+        msg['Subject'] = f"New Bullpen Sign-up - {sign_up_data['athlete_name']}"
         
         # Convert UTC time to Eastern Time for display
         import pytz
-        utc_time = signup_data['signup_date']
+        utc_time = sign_up_data['signup_date']
         eastern = pytz.timezone('US/Eastern')
         local_time = utc_time.replace(tzinfo=pytz.UTC).astimezone(eastern)
         
         # Create email body
         body = f"""
-New Bullpen Signup Received!
+New Bullpen Sign-up Received!
 
 Athlete Details:
-- Name: {signup_data['athlete_name']}
-- Phone: {signup_data['phone']}
-- Email: {signup_data['email'] if signup_data['email'] else 'Not provided'}
-- Coach: {signup_data['coach']}
-- Date: {signup_data['preferred_date'].strftime('%A, %B %d, %Y')}
-- Time: {signup_data['preferred_time']}
-- Notes: {signup_data['notes'] if signup_data['notes'] else 'None'}
+- Name: {sign_up_data['athlete_name']}
+- Phone: {sign_up_data['phone']}
+- Email: {sign_up_data['email'] if sign_up_data['email'] else 'Not provided'}
+- Coach: {sign_up_data['coach']}
+- Date: {sign_up_data['preferred_date'].strftime('%A, %B %d, %Y')}
+- Time: {sign_up_data['preferred_time']}
+- Notes: {sign_up_data['notes'] if sign_up_data['notes'] else 'None'}
 
-Signup Time: {local_time.strftime('%A, %B %d, %Y at %I:%M %p')} (Eastern Time)
+Sign-up Time: {local_time.strftime('%A, %B %d, %Y at %I:%M %p')} (Eastern Time)
 
 ---
-This is an automated notification from the Bullpen Signup Portal.
+This is an automated notification from the Bullpen Sign-up Portal.
         """
         
         msg.attach(MIMEText(body, 'plain'))
@@ -438,17 +438,17 @@ This is an automated notification from the Bullpen Signup Portal.
         st.error(f"Error sending email notification: {str(e)}")
         return False
 
-def athlete_signup_page():
-    """Main athlete signup page"""
+def athlete_sign_up_page():
+    """Main athlete sign-up page"""
     # Logo at the top
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.image("cressey_logo.png", width=400)
     
     
-    # Load settings and signups
+    # Load settings and sign-ups
     settings = load_settings()
-    signups_df = load_signups()
+    sign_ups_df = load_sign_ups()
     
     # Athlete information form
     st.markdown("### Athlete Information")
@@ -497,7 +497,7 @@ def athlete_signup_page():
         notes = st.text_area("Notes for your bullpen session:", placeholder="Any specific areas you want to work on, equipment needed, etc.", height=100)
         
         # Submit button
-        submitted = st.form_submit_button("Submit Signup", type="primary")
+        submitted = st.form_submit_button("Submit Sign-up", type="primary")
         
         if submitted:
             # Validation
@@ -505,7 +505,7 @@ def athlete_signup_page():
                 st.error("Please fill in all required fields (Name, Phone, Coach, and Time).")
                 return
             
-            # Add new signup
+            # Add new sign-up
             new_signup = pd.DataFrame([{
                 'athlete_name': athlete_name,
                 'email': email,
@@ -518,12 +518,12 @@ def athlete_signup_page():
                 'status': 'confirmed'
             }])
             
-            # Save signup
-            updated_df = pd.concat([signups_df, new_signup], ignore_index=True)
-            save_signups(updated_df)
+            # Save sign-up
+            updated_df = pd.concat([sign_ups_df, new_signup], ignore_index=True)
+            save_sign_ups(updated_df)
             
             # Add to Google Sheets
-            signup_data = {
+            sign_up_data = {
                 'athlete_name': athlete_name,
                 'email': email,
                 'phone': phone,
@@ -534,17 +534,17 @@ def athlete_signup_page():
                 'notes': notes if notes else ''
             }
             
-            google_sheets_success = add_signup_to_google_sheets(signup_data)
+            google_sheets_success = add_sign_up_to_google_sheets(sign_up_data)
             
             # Send email notification
-            email_success = send_signup_notification(signup_data)
+            email_success = send_sign_up_notification(sign_up_data)
             
             # Success message
             email_display = f'<p style="color: black;"><strong>Email:</strong> {email}</p>' if email else ''
             
             st.markdown(f"""
             <div class="success-box">
-                <h3 style="color: black;">Signup Successful!</h3>
+                <h3 style="color: black;">Sign-up Successful!</h3>
                 <p style="color: black;"><strong>Name:</strong> {athlete_name}</p>
                 <p style="color: black;"><strong>Date:</strong> {selected_date.strftime('%A, %B %d, %Y')}</p>
                 <p style="color: black;"><strong>Time:</strong> {selected_time}</p>
@@ -565,7 +565,7 @@ def admin_page():
     
     # Load data
     settings = load_settings()
-    signups_df = load_signups()
+    sign_ups_df = load_sign_ups()
     
     # Admin tabs
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["View Signups", "Schedule Export", "Settings", "Google Sheets", "Email Settings"])
@@ -573,7 +573,7 @@ def admin_page():
     with tab1:
         st.markdown("### Current Signups")
         
-        if signups_df.empty:
+        if sign_ups_df.empty:
             st.info("No signups yet.")
         else:
             # Filter options
@@ -591,7 +591,7 @@ def admin_page():
                     status_filter = "All"
             
             # Apply filters
-            filtered_df = signups_df.copy()
+            filtered_df = sign_ups_df.copy()
             
             if date_filter:
                 filtered_df = filtered_df[filtered_df['preferred_date'].dt.date == date_filter]
@@ -613,12 +613,12 @@ def admin_page():
                 display_df['coach'] = display_df['coach'].map(coach_initials).fillna(display_df['coach'])
                 
                 # Format date and time columns
-                display_df['Sign Up Date'] = display_df['signup_date'].dt.strftime('%m/%d/%Y')
-                display_df['Sign Up Time'] = display_df['signup_date'].dt.strftime('%I:%M %p')
+                display_df['Sign-up Date'] = display_df['signup_date'].dt.strftime('%m/%d/%Y')
+                display_df['Sign-up Time'] = display_df['signup_date'].dt.strftime('%I:%M %p')
                 
                 # Reorder columns
-                display_df = display_df[['athlete_name', 'email', 'phone', 'coach', 'Sign Up Date', 'Sign Up Time', 'preferred_date', 'preferred_time', 'notes', 'status']]
-                display_df.columns = ['Name', 'Email', 'Phone', 'Coach', 'Sign Up Date', 'Sign Up Time', 'Preferred Date', 'Preferred Time', 'Notes', 'Status']
+                display_df = display_df[['athlete_name', 'email', 'phone', 'coach', 'Sign-up Date', 'Sign-up Time', 'preferred_date', 'preferred_time', 'notes', 'status']]
+                display_df.columns = ['Name', 'Email', 'Phone', 'Coach', 'Sign-up Date', 'Sign-up Time', 'Preferred Date', 'Preferred Time', 'Notes', 'Status']
                 
                 # Format preferred date
                 display_df['Preferred Date'] = display_df['Preferred Date'].dt.strftime('%m/%d/%Y')
@@ -628,7 +628,7 @@ def admin_page():
                 # Summary stats
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.metric("Total Signups", len(filtered_df))
+                    st.metric("Total Sign-ups", len(filtered_df))
                 with col2:
                     confirmed_count = len(filtered_df[filtered_df['status'] == 'confirmed'])
                     st.metric("Confirmed", confirmed_count)
@@ -636,7 +636,7 @@ def admin_page():
                     cancelled_count = len(filtered_df[filtered_df['status'] == 'cancelled'])
                     st.metric("Cancelled", cancelled_count)
             else:
-                st.info("No signups match the selected filters.")
+                st.info("No sign-ups match the selected filters.")
     
     with tab2:
         st.markdown("### Export Schedule")
@@ -652,10 +652,10 @@ def admin_page():
         
         if st.button("Generate Schedule"):
             # Filter signups by date range
-            schedule_df = signups_df[
-                (signups_df['preferred_date'].dt.date >= start_date) &
-                (signups_df['preferred_date'].dt.date <= end_date) &
-                (signups_df['status'] == 'confirmed')
+            schedule_df = sign_ups_df[
+                (sign_ups_df['preferred_date'].dt.date >= start_date) &
+                (sign_ups_df['preferred_date'].dt.date <= end_date) &
+                (sign_ups_df['status'] == 'confirmed')
             ].copy()
             
             if schedule_df.empty:
@@ -678,12 +678,12 @@ def admin_page():
                 display_df['coach'] = display_df['coach'].map(coach_initials).fillna(display_df['coach'])
                 
                 # Format date and time columns
-                display_df['Sign Up Date'] = display_df['signup_date'].dt.strftime('%m/%d/%Y')
-                display_df['Sign Up Time'] = display_df['signup_date'].dt.strftime('%I:%M %p')
+                display_df['Sign-up Date'] = display_df['signup_date'].dt.strftime('%m/%d/%Y')
+                display_df['Sign-up Time'] = display_df['signup_date'].dt.strftime('%I:%M %p')
                 
                 # Reorder columns
-                display_df = display_df[['athlete_name', 'email', 'phone', 'coach', 'Sign Up Date', 'Sign Up Time', 'preferred_date', 'preferred_time', 'notes', 'status']]
-                display_df.columns = ['Name', 'Email', 'Phone', 'Coach', 'Sign Up Date', 'Sign Up Time', 'Preferred Date', 'Preferred Time', 'Notes', 'Status']
+                display_df = display_df[['athlete_name', 'email', 'phone', 'coach', 'Sign-up Date', 'Sign-up Time', 'preferred_date', 'preferred_time', 'notes', 'status']]
+                display_df.columns = ['Name', 'Email', 'Phone', 'Coach', 'Sign-up Date', 'Sign-up Time', 'Preferred Date', 'Preferred Time', 'Notes', 'Status']
                 
                 # Format preferred date
                 display_df['Preferred Date'] = display_df['Preferred Date'].dt.strftime('%m/%d/%Y')
@@ -808,14 +808,14 @@ def admin_page():
                 else:
                     st.error("❌ Failed to connect to Google Sheets - check credentials")
             
-            # Sync all signups
-            if st.button("Sync All Signups to Google Sheets"):
-                with st.spinner("Syncing signups..."):
-                    success = sync_all_signups_to_google_sheets()
+            # Sync all sign-ups
+            if st.button("Sync All Sign-ups to Google Sheets"):
+                with st.spinner("Syncing sign-ups..."):
+                    success = sync_all_sign_ups_to_google_sheets()
                     if success:
-                        st.success("✅ All signups synced to Google Sheets!")
+                        st.success("✅ All sign-ups synced to Google Sheets!")
                     else:
-                        st.error("❌ Failed to sync signups")
+                        st.error("❌ Failed to sync sign-ups")
             
             # Show current sheet info
             st.markdown("**Current Configuration:**")
@@ -858,7 +858,7 @@ def admin_page():
            - Click "Security" → "2-Step Verification" → "App passwords"
            - Generate a new app password for "Mail"
         3. **Update the app password** in the code (line 113 in app.py)
-        4. **Test the email** by making a test signup
+        4. **Test the email** by making a test sign-up
         """)
         
         st.warning("⚠️ **Security Note:** The app password is currently stored in the code. For production, consider using environment variables or Streamlit secrets.")
@@ -872,11 +872,11 @@ def admin_page():
                 'signup_date': datetime.datetime.now(),
                 'preferred_date': datetime.date.today() + timedelta(days=1),
                 'preferred_time': '10:00 AM',
-                'notes': 'This is a test signup'
+                'notes': 'This is a test sign-up'
             }
             
             with st.spinner("Sending test email..."):
-                success = send_signup_notification(test_data)
+                success = send_sign_up_notification(test_data)
                 if success:
                     st.success("✅ Test email sent successfully!")
                 else:
@@ -886,10 +886,10 @@ def main():
     """Main application"""
     # Sidebar navigation
     st.sidebar.title("Navigation")
-    page = st.sidebar.selectbox("Choose a page:", ["Athlete Signup", "Admin Dashboard"])
+    page = st.sidebar.selectbox("Choose a page:", ["Athlete Sign-up", "Admin Dashboard"])
     
-    if page == "Athlete Signup":
-        athlete_signup_page()
+    if page == "Athlete Sign-up":
+        athlete_sign_up_page()
     else:
         # Simple password protection for admin
         admin_password = st.sidebar.text_input("Admin Password", type="password")
