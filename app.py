@@ -397,6 +397,12 @@ def send_signup_notification(signup_data: Dict):
         msg['To'] = EMAIL_CONFIG["recipient_email"]
         msg['Subject'] = f"New Bullpen Signup - {signup_data['athlete_name']}"
         
+        # Convert UTC time to Eastern Time for display
+        import pytz
+        utc_time = signup_data['signup_date']
+        eastern = pytz.timezone('US/Eastern')
+        local_time = utc_time.replace(tzinfo=pytz.UTC).astimezone(eastern)
+        
         # Create email body
         body = f"""
 New Bullpen Signup Received!
@@ -410,7 +416,7 @@ Athlete Details:
 - Time: {signup_data['preferred_time']}
 - Notes: {signup_data['notes'] if signup_data['notes'] else 'None'}
 
-Signup Time: {signup_data['signup_date'].strftime('%A, %B %d, %Y at %I:%M %p')}
+Signup Time: {local_time.strftime('%A, %B %d, %Y at %I:%M %p')} (Eastern Time)
 
 ---
 This is an automated notification from the Bullpen Signup Portal.
