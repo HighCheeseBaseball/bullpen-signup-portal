@@ -499,43 +499,73 @@ This is an automated notification from the Bullpen Sign-up Portal.
 
 def display_logo():
     """Display logo based on current theme (dark/light mode)"""
-    # Use CSS to automatically switch logos based on theme
+    # Use JavaScript to dynamically switch logos based on theme
     st.markdown("""
-    <style>
-    /* Default logo (dark mode) */
-    .logo-container img {
-        content: url('cressey_logo.png');
-    }
-    
-    /* Light mode logo - when body has light theme */
-    [data-testid="stApp"]:not([data-theme="dark"]) .logo-container img,
-    .stApp:not([data-theme="dark"]) .logo-container img {
-        content: url('cressey_logo_light.png');
-    }
-    
-    /* Alternative detection for light mode */
-    @media (prefers-color-scheme: light) {
-        .logo-container img {
-            content: url('cressey_logo_light.png');
+    <script>
+    function updateLogo() {
+        const logoImg = document.querySelector('.logo-container img');
+        if (!logoImg) return;
+        
+        // Check if we're in light mode by looking at various indicators
+        const body = document.body;
+        const app = document.querySelector('[data-testid="stApp"]') || document.querySelector('.stApp');
+        
+        // Multiple ways to detect light mode
+        const isLightMode = 
+            // Check if body has light background
+            window.getComputedStyle(body).backgroundColor.includes('rgb(255, 255, 255)') ||
+            window.getComputedStyle(body).backgroundColor.includes('#ffffff') ||
+            window.getComputedStyle(body).backgroundColor.includes('white') ||
+            // Check if app has light background
+            (app && (
+                window.getComputedStyle(app).backgroundColor.includes('rgb(255, 255, 255)') ||
+                window.getComputedStyle(app).backgroundColor.includes('#ffffff') ||
+                window.getComputedStyle(app).backgroundColor.includes('white')
+            )) ||
+            // Check for light mode classes or attributes
+            body.classList.contains('light') ||
+            app && app.getAttribute('data-theme') === 'light' ||
+            // Check media query
+            window.matchMedia('(prefers-color-scheme: light)').matches;
+        
+        // Update logo based on theme
+        if (isLightMode) {
+            logoImg.src = 'cressey_logo_light.png';
+        } else {
+            logoImg.src = 'cressey_logo.png';
         }
     }
     
-    /* Force dark mode detection */
-    .stApp[style*="background-color: rgb(255, 255, 255)"],
-    .stApp[style*="background-color: #ffffff"],
-    .stApp[style*="background-color: white"] {
-        .logo-container img {
-            content: url('cressey_logo_light.png');
-        }
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', updateLogo);
+    
+    // Run when theme changes
+    const observer = new MutationObserver(updateLogo);
+    observer.observe(document.body, { 
+        attributes: true, 
+        attributeFilter: ['class', 'style', 'data-theme'],
+        subtree: true 
+    });
+    
+    // Also observe the app container
+    const app = document.querySelector('[data-testid="stApp"]') || document.querySelector('.stApp');
+    if (app) {
+        observer.observe(app, { 
+            attributes: true, 
+            attributeFilter: ['class', 'style', 'data-theme'] 
+        });
     }
-    </style>
+    
+    // Run periodically to catch any missed changes
+    setInterval(updateLogo, 1000);
+    </script>
     """, unsafe_allow_html=True)
     
-    # Display the logo with a container class for CSS targeting
+    # Display the logo with a container class for JavaScript targeting
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-        st.image("cressey_logo.png", width=400)  # Default logo (will be overridden by CSS)
+        st.image("cressey_logo.png", width=400, key="dynamic_logo")  # Default logo (will be updated by JavaScript)
         st.markdown('</div>', unsafe_allow_html=True)
 
 def athlete_sign_up_page():
