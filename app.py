@@ -251,6 +251,11 @@ def get_google_sheets_client():
                 credentials_json = json.loads(credentials_data)
             else:
                 credentials_json = credentials_data
+            
+            # Fix private key formatting if it's a string
+            if 'private_key' in credentials_json and isinstance(credentials_json['private_key'], str):
+                # Replace \\n with actual newlines
+                credentials_json['private_key'] = credentials_json['private_key'].replace('\\n', '\n')
                 
             creds = ServiceAccountCredentials.from_json_keyfile_dict(
                 credentials_json, scope
