@@ -364,9 +364,12 @@ def sync_all_signups_to_google_sheets():
 def send_signup_notification(signup_data: Dict):
     """Send email notification for new signup"""
     try:
+        # Get app password from Streamlit secrets or config
+        app_password = st.secrets.get("GMAIL_APP_PASSWORD", EMAIL_CONFIG["app_password"])
+        
         # Check if email is configured
-        if not EMAIL_CONFIG["app_password"]:
-            st.warning("Email notifications not configured. Please set up Gmail App Password.")
+        if not app_password:
+            st.warning("Email notifications not configured. Please set up Gmail App Password in Streamlit secrets.")
             return False
         
         # Create message
@@ -399,7 +402,7 @@ This is an automated notification from the Bullpen Signup Portal.
         # Send email
         server = smtplib.SMTP(EMAIL_CONFIG["smtp_server"], EMAIL_CONFIG["smtp_port"])
         server.starttls()
-        server.login(EMAIL_CONFIG["sender_email"], EMAIL_CONFIG["app_password"])
+        server.login(EMAIL_CONFIG["sender_email"], app_password)
         text = msg.as_string()
         server.sendmail(EMAIL_CONFIG["sender_email"], EMAIL_CONFIG["recipient_email"], text)
         server.quit()
@@ -764,20 +767,20 @@ def admin_page():
             - **Worksheet:** {GOOGLE_SHEETS_CONFIG['worksheet_name']}
             - **Credentials File:** {GOOGLE_SHEETS_CONFIG['credentials_file']}
             """)
-    
-    else:
-        st.error("❌ Google credentials file not found")
-        st.markdown("""
-        **Setup Instructions:**
         
-        1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-        2. Create a new project or select existing one
-        3. Enable Google Sheets API and Google Drive API
-        4. Create a Service Account
-        5. Download the JSON credentials file
-        6. Rename it to `google_credentials.json` and place it in this folder
-        7. Share your Google Sheet with the service account email
-        """)
+        else:
+            st.error("❌ Google credentials file not found")
+            st.markdown("""
+            **Setup Instructions:**
+            
+            1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+            2. Create a new project or select existing one
+            3. Enable Google Sheets API and Google Drive API
+            4. Create a Service Account
+            5. Download the JSON credentials file
+            6. Rename it to `google_credentials.json` and place it in this folder
+            7. Share your Google Sheet with the service account email
+            """)
     
     with tab5:
         st.markdown("### Email Notification Settings")
