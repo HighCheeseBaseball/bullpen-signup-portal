@@ -893,7 +893,7 @@ def main():
     else:
         # Simple password protection for admin
         admin_password = st.sidebar.text_input("Admin Password", type="password")
-        if admin_password == "admin123":  # Change this to a more secure password
+        if admin_password == "CSPbaseball123":  # Change this to a more secure password
             admin_page()
         elif admin_password:
             st.error("Incorrect password")
@@ -901,4 +901,5 @@ def main():
             st.info("Enter admin password to access dashboard")
 
 if __name__ == "__main__":
+
     main()
