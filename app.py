@@ -8,6 +8,9 @@ from typing import List, Dict, Optional
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Set page config
 st.set_page_config(
@@ -99,6 +102,15 @@ GOOGLE_SHEETS_CONFIG = {
     "sheet_name": "Day Sheet '25",  # Change this to your actual sheet name
     "worksheet_name": "Online Bullpen Sign-Ups",
     "credentials_file": "google_credentials.json"  # Replace with your new credentials file
+}
+
+# Email configuration
+EMAIL_CONFIG = {
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "sender_email": "cspbullpen@gmail.com",  # Your Gmail address
+    "recipient_email": "cspflorida@gmail.com",  # Where to send notifications
+    "app_password": "epfm jgxz oznu anwf"  # Gmail App Password (you'll need to set this up)
 }
 
 # Default settings
@@ -225,19 +237,26 @@ def is_past_slot(preferred_date: datetime.date, time_slot: str) -> bool:
 def get_google_sheets_client():
     """Initialize and return Google Sheets client"""
     try:
-        # Check if credentials file exists
-        if not os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
-            st.error(f"Google credentials file not found: {GOOGLE_SHEETS_CONFIG['credentials_file']}")
-            st.info("Please follow the setup instructions to create the credentials file.")
-            return None
-        
         # Define the scope
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         
-        # Load credentials
-        creds = ServiceAccountCredentials.from_json_keyfile_name(
-            GOOGLE_SHEETS_CONFIG["credentials_file"], scope
-        )
+        # Try to get credentials from Streamlit secrets first, then fallback to file
+        try:
+            # Get credentials from Streamlit secrets
+            credentials_json = st.secrets["GOOGLE_CREDENTIALS"]
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(
+                credentials_json, scope
+            )
+        except:
+            # Fallback to file-based credentials
+            if not os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
+                st.error(f"Google credentials not found in secrets or file: {GOOGLE_SHEETS_CONFIG['credentials_file']}")
+                st.info("Please add GOOGLE_CREDENTIALS to Streamlit secrets or create the credentials file.")
+                return None
+            
+            creds = ServiceAccountCredentials.from_json_keyfile_name(
+                GOOGLE_SHEETS_CONFIG["credentials_file"], scope
+            )
         
         # Authorize and create client
         client = gspread.authorize(creds)
@@ -349,6 +368,58 @@ def sync_all_signups_to_google_sheets():
         st.error(f"Error syncing to Google Sheets: {str(e)}")
         return False
 
+def send_signup_notification(signup_data: Dict):
+    """Send email notification for new signup"""
+    try:
+        # Get app password from Streamlit secrets or config
+        app_password = st.secrets.get("GMAIL_APP_PASSWORD", EMAIL_CONFIG["app_password"])
+        
+        # Check if email is configured
+        if not app_password:
+            st.warning("Email notifications not configured. Please set up Gmail App Password in Streamlit secrets.")
+            return False
+        
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_CONFIG["sender_email"]
+        msg['To'] = EMAIL_CONFIG["recipient_email"]
+        msg['Subject'] = f"New Bullpen Signup - {signup_data['athlete_name']}"
+        
+        # Create email body
+        body = f"""
+New Bullpen Signup Received!
+
+Athlete Details:
+- Name: {signup_data['athlete_name']}
+- Phone: {signup_data['phone']}
+- Email: {signup_data['email'] if signup_data['email'] else 'Not provided'}
+- Coach: {signup_data['coach']}
+- Date: {signup_data['preferred_date'].strftime('%A, %B %d, %Y')}
+- Time: {signup_data['preferred_time']}
+- Notes: {signup_data['notes'] if signup_data['notes'] else 'None'}
+
+Signup Time: {signup_data['signup_date'].strftime('%A, %B %d, %Y at %I:%M %p')}
+
+---
+This is an automated notification from the Bullpen Signup Portal.
+        """
+        
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # Send email
+        server = smtplib.SMTP(EMAIL_CONFIG["smtp_server"], EMAIL_CONFIG["smtp_port"])
+        server.starttls()
+        server.login(EMAIL_CONFIG["sender_email"], app_password)
+        text = msg.as_string()
+        server.sendmail(EMAIL_CONFIG["sender_email"], EMAIL_CONFIG["recipient_email"], text)
+        server.quit()
+        
+        return True
+        
+    except Exception as e:
+        st.error(f"Error sending email notification: {str(e)}")
+        return False
+
 def athlete_signup_page():
     """Main athlete signup page"""
     # Logo at the top
@@ -356,7 +427,6 @@ def athlete_signup_page():
     with col2:
         st.image("cressey_logo.png", width=400)
     
-    st.markdown('<h1 class="main-header">Bullpen Signup Portal</h1>', unsafe_allow_html=True)
     
     # Load settings and signups
     settings = load_settings()
@@ -448,6 +518,9 @@ def athlete_signup_page():
             
             google_sheets_success = add_signup_to_google_sheets(signup_data)
             
+            # Send email notification
+            email_success = send_signup_notification(signup_data)
+            
             # Success message
             email_display = f'<p style="color: black;"><strong>Email:</strong> {email}</p>' if email else ''
             
@@ -477,7 +550,7 @@ def admin_page():
     signups_df = load_signups()
     
     # Admin tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["View Signups", "Schedule Export", "Settings", "Google Sheets"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["View Signups", "Schedule Export", "Settings", "Google Sheets", "Email Settings"])
     
     with tab1:
         st.markdown("### Current Signups")
@@ -673,9 +746,21 @@ def admin_page():
     with tab4:
         st.markdown("### Google Sheets Integration")
         
-        # Check if credentials file exists
-        if os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
+        # Check if credentials are available (secrets or file)
+        credentials_available = False
+        try:
+            # Check if credentials are in Streamlit secrets
+            if "GOOGLE_CREDENTIALS" in st.secrets:
+                st.success("✅ Google credentials found in Streamlit secrets")
+                credentials_available = True
+        except:
+            pass
+        
+        if not credentials_available and os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
             st.success("✅ Google credentials file found")
+            credentials_available = True
+        
+        if credentials_available:
             
             # Test connection
             if st.button("Test Google Sheets Connection"):
@@ -701,7 +786,7 @@ def admin_page():
             - **Worksheet:** {GOOGLE_SHEETS_CONFIG['worksheet_name']}
             - **Credentials File:** {GOOGLE_SHEETS_CONFIG['credentials_file']}
             """)
-            
+        
         else:
             st.error("❌ Google credentials file not found")
             st.markdown("""
@@ -715,6 +800,48 @@ def admin_page():
             6. Rename it to `google_credentials.json` and place it in this folder
             7. Share your Google Sheet with the service account email
             """)
+    
+    with tab5:
+        st.markdown("### Email Notification Settings")
+        
+        st.markdown("**Current Configuration:**")
+        st.info(f"""
+        - **Sender Email:** {EMAIL_CONFIG['sender_email']}
+        - **Recipient Email:** {EMAIL_CONFIG['recipient_email']}
+        - **Status:** {'✅ Configured' if EMAIL_CONFIG['app_password'] else '❌ Not configured'}
+        """)
+        
+        st.markdown("**Setup Instructions:**")
+        st.markdown("""
+        1. **Enable 2-Factor Authentication** on your Gmail account
+        2. **Generate an App Password:**
+           - Go to [Google Account Settings](https://myaccount.google.com/)
+           - Click "Security" → "2-Step Verification" → "App passwords"
+           - Generate a new app password for "Mail"
+        3. **Update the app password** in the code (line 113 in app.py)
+        4. **Test the email** by making a test signup
+        """)
+        
+        st.warning("⚠️ **Security Note:** The app password is currently stored in the code. For production, consider using environment variables or Streamlit secrets.")
+        
+        if st.button("Test Email Configuration"):
+            test_data = {
+                'athlete_name': 'Test User',
+                'email': 'test@example.com',
+                'phone': '(555) 123-4567',
+                'coach': 'Austin Henrich',
+                'signup_date': datetime.datetime.now(),
+                'preferred_date': datetime.date.today() + timedelta(days=1),
+                'preferred_time': '10:00 AM',
+                'notes': 'This is a test signup'
+            }
+            
+            with st.spinner("Sending test email..."):
+                success = send_signup_notification(test_data)
+                if success:
+                    st.success("✅ Test email sent successfully!")
+                else:
+                    st.error("❌ Failed to send test email. Check your app password configuration.")
 
 def main():
     """Main application"""
