@@ -237,19 +237,26 @@ def is_past_slot(preferred_date: datetime.date, time_slot: str) -> bool:
 def get_google_sheets_client():
     """Initialize and return Google Sheets client"""
     try:
-        # Check if credentials file exists
-        if not os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
-            st.error(f"Google credentials file not found: {GOOGLE_SHEETS_CONFIG['credentials_file']}")
-            st.info("Please follow the setup instructions to create the credentials file.")
-            return None
-        
         # Define the scope
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         
-        # Load credentials
-        creds = ServiceAccountCredentials.from_json_keyfile_name(
-            GOOGLE_SHEETS_CONFIG["credentials_file"], scope
-        )
+        # Try to get credentials from Streamlit secrets first, then fallback to file
+        try:
+            # Get credentials from Streamlit secrets
+            credentials_json = st.secrets["GOOGLE_CREDENTIALS"]
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(
+                credentials_json, scope
+            )
+        except:
+            # Fallback to file-based credentials
+            if not os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
+                st.error(f"Google credentials not found in secrets or file: {GOOGLE_SHEETS_CONFIG['credentials_file']}")
+                st.info("Please add GOOGLE_CREDENTIALS to Streamlit secrets or create the credentials file.")
+                return None
+            
+            creds = ServiceAccountCredentials.from_json_keyfile_name(
+                GOOGLE_SHEETS_CONFIG["credentials_file"], scope
+            )
         
         # Authorize and create client
         client = gspread.authorize(creds)
@@ -739,9 +746,21 @@ def admin_page():
     with tab4:
         st.markdown("### Google Sheets Integration")
         
-        # Check if credentials file exists
-        if os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
+        # Check if credentials are available (secrets or file)
+        credentials_available = False
+        try:
+            # Check if credentials are in Streamlit secrets
+            if "GOOGLE_CREDENTIALS" in st.secrets:
+                st.success("✅ Google credentials found in Streamlit secrets")
+                credentials_available = True
+        except:
+            pass
+        
+        if not credentials_available and os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
             st.success("✅ Google credentials file found")
+            credentials_available = True
+        
+        if credentials_available:
             
             # Test connection
             if st.button("Test Google Sheets Connection"):
