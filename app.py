@@ -11,7 +11,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # Set page config
 st.set_page_config(
-    page_title="",
+    page_title="Bullpen Signup Portal",
     page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -20,6 +20,63 @@ st.set_page_config(
 # Custom CSS for better styling
 st.markdown("""
 <style>
+    /* Hide GitHub info and Streamlit branding */
+    .stDeployButton, 
+    .stAppViewContainer > div:first-child, 
+    .stAppViewContainer > div:last-child, 
+    [data-testid="stHeader"], 
+    [data-testid="stToolbar"],
+    .stApp > header,
+    .stApp > div:first-child,
+    .stApp > div:last-child,
+    /* Hide the top bar with GitHub button */
+    .stApp > div[data-testid="stHeader"],
+    .stApp > div[data-testid="stToolbar"],
+    .stApp > div[data-testid="stSidebar"],
+    /* Hide specific GitHub elements */
+    [data-testid="stDeployButton"],
+    [data-testid="stGitHubButton"],
+    /* Hide the entire top navigation bar */
+    .stApp > div:first-child > div:first-child,
+    .stApp > div:first-child > div:last-child,
+    /* Hide Streamlit Cloud specific elements */
+    .stApp > div[class*="header"],
+    .stApp > div[class*="toolbar"],
+    .stApp > div[class*="navigation"] {
+        display: none !important;
+    }
+    
+    /* Hide the hamburger menu and other Streamlit UI elements */
+    .stApp > div[data-testid="stSidebar"] {
+        display: none !important;
+    }
+    
+    /* Additional hiding for Streamlit Cloud elements */
+    .stApp > div[class*="stAppViewContainer"] > div:first-child,
+    .stApp > div[class*="stAppViewContainer"] > div:last-child {
+        display: none !important;
+    }
+    
+    /* Hide the specific top bar elements you're seeing */
+    .stApp > div[data-testid="stAppViewContainer"] > div:first-child,
+    .stApp > div[data-testid="stAppViewContainer"] > div:last-child,
+    /* Hide the entire top navigation area */
+    .stApp > div[class*="stAppViewContainer"] > div[class*="stHeader"],
+    .stApp > div[class*="stAppViewContainer"] > div[class*="stToolbar"],
+    /* Hide the GitHub button specifically */
+    .stApp > div[class*="stAppViewContainer"] > div[class*="stHeader"] > div[class*="stDeployButton"],
+    .stApp > div[class*="stAppViewContainer"] > div[class*="stHeader"] > div[class*="stGitHubButton"],
+    /* Hide the entire top bar */
+    .stApp > div[class*="stAppViewContainer"] > div[class*="stHeader"],
+    .stApp > div[class*="stAppViewContainer"] > div[class*="stToolbar"] {
+        display: none !important;
+    }
+    
+    /* Nuclear option - hide the entire top section */
+    .stApp > div[data-testid="stAppViewContainer"] > div:first-child {
+        display: none !important;
+    }
+    
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
@@ -734,6 +791,4 @@ def main():
             st.info("Enter admin password to access dashboard")
 
 if __name__ == "__main__":
-
     main()
-
