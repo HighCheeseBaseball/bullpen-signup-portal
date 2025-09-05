@@ -11,7 +11,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # Set page config
 st.set_page_config(
-    page_title="Bullpen Signup Portal",
+    page_title="",
     page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -735,4 +735,5 @@ def main():
             st.info("Enter admin password to access dashboard")
 
 if __name__ == "__main__":
+
     main()
