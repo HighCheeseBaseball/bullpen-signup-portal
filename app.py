@@ -200,7 +200,10 @@ def save_sign_ups(df: pd.DataFrame):
 
 def is_within_cutoff(preferred_date: datetime.date, cutoff_hours: int) -> bool:
     """Check if the preferred date is within the cutoff period"""
-    now = datetime.datetime.now()
+    # Use Eastern timezone for consistent calculations
+    import pytz
+    eastern = pytz.timezone('US/Eastern')
+    now = datetime.datetime.now(eastern)
     cutoff_time = now + timedelta(hours=cutoff_hours)
     
     # Allow all dates from tomorrow onwards
@@ -208,12 +211,15 @@ def is_within_cutoff(preferred_date: datetime.date, cutoff_hours: int) -> bool:
         return True
     
     # For same day, check if it's within cutoff
-    preferred_datetime = datetime.datetime.combine(preferred_date, datetime.time.min)
+    preferred_datetime = eastern.localize(datetime.datetime.combine(preferred_date, datetime.time.min))
     return preferred_datetime >= cutoff_time
 
 def is_time_slot_within_cutoff(preferred_date: datetime.date, preferred_time: str, cutoff_hours: int) -> bool:
     """Check if the specific date and time combination is within the cutoff period"""
-    now = datetime.datetime.now()
+    # Use Eastern timezone for consistent calculations
+    import pytz
+    eastern = pytz.timezone('US/Eastern')
+    now = datetime.datetime.now(eastern)
     cutoff_time = now + timedelta(hours=cutoff_hours)
     
     # Parse the preferred time
@@ -248,8 +254,8 @@ def is_time_slot_within_cutoff(preferred_date: datetime.date, preferred_time: st
         elif not is_pm and hour == 12:
             hour = 0
         
-        # Create datetime object
-        preferred_datetime = datetime.datetime.combine(preferred_date, datetime.time(hour, minute))
+        # Create datetime object in Eastern timezone
+        preferred_datetime = eastern.localize(datetime.datetime.combine(preferred_date, datetime.time(hour, minute)))
         
         # Check if it's within cutoff
         return preferred_datetime >= cutoff_time
@@ -279,7 +285,10 @@ def is_past_slot(preferred_date: datetime.date, time_slot: str) -> bool:
     """Check if a time slot is in the past"""
     slot_time = datetime.datetime.strptime(time_slot, "%I:%M %p").time()
     slot_datetime = datetime.datetime.combine(preferred_date, slot_time)
-    return slot_datetime < datetime.datetime.now()
+    # Use Eastern timezone for consistent calculations
+    import pytz
+    eastern = pytz.timezone('US/Eastern')
+    return slot_datetime < datetime.datetime.now(eastern)
 
 def get_google_sheets_client():
     """Initialize and return Google Sheets client"""
@@ -663,7 +672,7 @@ def athlete_sign_up_page():
                 'email': email,
                 'phone': phone,
                 'coach': coach,
-                'signup_date': datetime.datetime.now(),
+                'signup_date': datetime.datetime.now(pytz.timezone('US/Eastern')),
                 'preferred_date': pd.to_datetime(selected_date),
                 'preferred_time': selected_time,
                 'notes': notes if notes else '',
@@ -680,7 +689,7 @@ def athlete_sign_up_page():
                 'email': email,
                 'phone': phone,
                 'coach': coach,
-                'signup_date': datetime.datetime.now(),
+                'signup_date': datetime.datetime.now(pytz.timezone('US/Eastern')),
                 'preferred_date': selected_date,
                 'preferred_time': selected_time,
                 'notes': notes if notes else ''
@@ -1007,7 +1016,7 @@ def admin_page():
                 'email': 'test@example.com',
                 'phone': '(555) 123-4567',
                 'coach': 'Austin Henrich',
-                'signup_date': datetime.datetime.now(),
+                'signup_date': datetime.datetime.now(pytz.timezone('US/Eastern')),
                 'preferred_date': datetime.date.today() + timedelta(days=1),
                 'preferred_time': '10:00 AM',
                 'notes': 'This is a test sign-up'
