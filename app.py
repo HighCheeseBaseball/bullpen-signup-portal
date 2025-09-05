@@ -356,7 +356,6 @@ def athlete_signup_page():
     with col2:
         st.image("cressey_logo.png", width=400)
     
-    st.markdown('<h1 class="main-header">Bullpen Signup Portal</h1>', unsafe_allow_html=True)
     
     # Load settings and signups
     settings = load_settings()
@@ -737,3 +736,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
