@@ -250,8 +250,6 @@ def get_google_sheets_client():
         except:
             # Fallback to file-based credentials
             if not os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
-                st.error(f"Google credentials not found in secrets or file: {GOOGLE_SHEETS_CONFIG['credentials_file']}")
-                st.info("Please add GOOGLE_CREDENTIALS to Streamlit secrets or create the credentials file.")
                 return None
             
             creds = ServiceAccountCredentials.from_json_keyfile_name(
@@ -766,9 +764,18 @@ def admin_page():
             if st.button("Test Google Sheets Connection"):
                 client = get_google_sheets_client()
                 if client:
-                    st.success("✅ Successfully connected to Google Sheets!")
+                    # Test actual sheet access
+                    try:
+                        sheet, worksheet = get_google_sheet()
+                        if sheet and worksheet:
+                            st.success("✅ Successfully connected to Google Sheets!")
+                            st.info(f"Connected to sheet: '{sheet.title}' with worksheet: '{worksheet.title}'")
+                        else:
+                            st.error("❌ Connected to Google Sheets but couldn't access the specific sheet/worksheet")
+                    except Exception as e:
+                        st.error(f"❌ Connected to Google Sheets but error accessing sheet: {str(e)}")
                 else:
-                    st.error("❌ Failed to connect to Google Sheets")
+                    st.error("❌ Failed to connect to Google Sheets - check credentials")
             
             # Sync all signups
             if st.button("Sync All Signups to Google Sheets"):
@@ -788,7 +795,8 @@ def admin_page():
             """)
         
         else:
-            st.error("❌ Google credentials file not found")
+            st.error("❌ Google credentials not found")
+            st.info("Please add GOOGLE_CREDENTIALS to Streamlit secrets or create the credentials file.")
             st.markdown("""
             **Setup Instructions:**
             
@@ -797,7 +805,7 @@ def admin_page():
             3. Enable Google Sheets API and Google Drive API
             4. Create a Service Account
             5. Download the JSON credentials file
-            6. Rename it to `google_credentials.json` and place it in this folder
+            6. Add the credentials to Streamlit secrets as GOOGLE_CREDENTIALS
             7. Share your Google Sheet with the service account email
             """)
     
