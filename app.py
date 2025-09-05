@@ -20,66 +20,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Force dark mode
-st.markdown("""
-<style>
-    .stApp {
-        color: white;
-        background-color: #0e1117;
-    }
-    .stApp > header {
-        background-color: transparent;
-    }
-    .stApp > div > div > div > div {
-        background-color: #0e1117;
-    }
-    .stSidebar {
-        background-color: #262730;
-    }
-    .stSidebar > div > div > div > div {
-        background-color: #262730;
-    }
-    .stSelectbox > div > div {
-        background-color: #262730;
-        color: white;
-    }
-    .stTextInput > div > div > input {
-        background-color: #262730;
-        color: white;
-    }
-    .stTextArea > div > div > textarea {
-        background-color: #262730;
-        color: white;
-    }
-    .stButton > button {
-        background-color: #ff4b4b;
-        color: white;
-    }
-    .stButton > button:hover {
-        background-color: #ff6b6b;
-    }
-    .stForm {
-        background-color: #262730;
-    }
-    .stInfo {
-        background-color: #1f2937;
-        border: 1px solid #374151;
-    }
-    .stSuccess {
-        background-color: #064e3b;
-        border: 1px solid #065f46;
-    }
-    .stError {
-        background-color: #7f1d1d;
-        border: 1px solid #991b1b;
-    }
-    .stWarning {
-        background-color: #78350f;
-        border: 1px solid #92400e;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 # Custom CSS for better styling
 st.markdown("""
 <style>
