@@ -247,7 +247,8 @@ def get_google_sheets_client():
             creds = ServiceAccountCredentials.from_json_keyfile_dict(
                 credentials_json, scope
             )
-        except:
+        except Exception as e:
+            st.error(f"Error loading credentials from secrets: {str(e)}")
             # Fallback to file-based credentials
             if not os.path.exists(GOOGLE_SHEETS_CONFIG["credentials_file"]):
                 return None
@@ -762,6 +763,17 @@ def admin_page():
             
             # Test connection
             if st.button("Test Google Sheets Connection"):
+                # First test: Check if credentials are valid JSON
+                try:
+                    import json
+                    credentials_json = st.secrets["GOOGLE_CREDENTIALS"]
+                    json.loads(credentials_json)  # Test if it's valid JSON
+                    st.info("✅ Credentials are valid JSON format")
+                except Exception as e:
+                    st.error(f"❌ Credentials are not valid JSON: {str(e)}")
+                    return
+                
+                # Second test: Try to create client
                 client = get_google_sheets_client()
                 if client:
                     # Test actual sheet access
