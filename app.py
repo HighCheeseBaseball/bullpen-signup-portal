@@ -243,7 +243,15 @@ def get_google_sheets_client():
         # Try to get credentials from Streamlit secrets first, then fallback to file
         try:
             # Get credentials from Streamlit secrets
-            credentials_json = st.secrets["GOOGLE_CREDENTIALS"]
+            credentials_data = st.secrets["GOOGLE_CREDENTIALS"]
+            
+            # Handle both string and dict formats
+            if isinstance(credentials_data, str):
+                import json
+                credentials_json = json.loads(credentials_data)
+            else:
+                credentials_json = credentials_data
+                
             creds = ServiceAccountCredentials.from_json_keyfile_dict(
                 credentials_json, scope
             )
