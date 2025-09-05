@@ -549,6 +549,7 @@ def athlete_sign_up_page():
         
         # Time input
         st.markdown("### Select Time")
+        st.info("Must sign-up 16 hours in advance")
         selected_time = st.text_input("Choose Preferred Time (9:00 AM - 6:00 PM):", placeholder="10:15AM")
         
         # Notes section
