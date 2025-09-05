@@ -20,9 +20,71 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better styling
+# Force dark mode and custom styling
 st.markdown("""
 <style>
+    /* Force dark mode */
+    .stApp {
+        background-color: #0e1117 !important;
+        color: white !important;
+    }
+    
+    .stApp > div > div > div > div {
+        background-color: #0e1117 !important;
+    }
+    
+    .stSidebar {
+        background-color: #262730 !important;
+    }
+    
+    .stSelectbox > div > div {
+        background-color: #262730 !important;
+        color: white !important;
+    }
+    
+    .stTextInput > div > div > input {
+        background-color: #262730 !important;
+        color: white !important;
+    }
+    
+    .stTextArea > div > div > textarea {
+        background-color: #262730 !important;
+        color: white !important;
+    }
+    
+    .stButton > button {
+        background-color: #ff4b4b !important;
+        color: white !important;
+    }
+    
+    .stButton > button:hover {
+        background-color: #ff6b6b !important;
+    }
+    
+    .stForm {
+        background-color: #262730 !important;
+    }
+    
+    .stInfo {
+        background-color: #1f2937 !important;
+        border: 1px solid #374151 !important;
+    }
+    
+    .stSuccess {
+        background-color: #064e3b !important;
+        border: 1px solid #065f46 !important;
+    }
+    
+    .stError {
+        background-color: #7f1d1d !important;
+        border: 1px solid #991b1b !important;
+    }
+    
+    .stWarning {
+        background-color: #78350f !important;
+        border: 1px solid #92400e !important;
+    }
+    
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
@@ -498,93 +560,11 @@ This is an automated notification from the Bullpen Sign-up Portal.
         return False
 
 def display_logo():
-    """Display logo based on current theme (dark/light mode)"""
-    # Use JavaScript to detect background color and switch logos accordingly
-    st.markdown("""
-    <script>
-    function getBackgroundColor(element) {
-        const style = window.getComputedStyle(element);
-        return style.backgroundColor;
-    }
-    
-    function isLightBackground(color) {
-        // Convert RGB to brightness value
-        if (color.includes('rgb')) {
-            const rgb = color.match(/\\d+/g);
-            if (rgb && rgb.length >= 3) {
-                const r = parseInt(rgb[0]);
-                const g = parseInt(rgb[1]);
-                const b = parseInt(rgb[2]);
-                // Calculate brightness using luminance formula
-                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-                return brightness > 128; // If brightness > 128, it's light
-            }
-        }
-        // Fallback: check for common light colors
-        return color.includes('rgb(255, 255, 255)') || 
-               color.includes('#ffffff') || 
-               color.includes('white') ||
-               color.includes('rgb(248, 249, 250)') || // Light gray
-               color.includes('#f8f9fa');
-    }
-    
-    function updateLogo() {
-        const logoImg = document.querySelector('.logo-container img');
-        if (!logoImg) return;
-        
-        // Get background color from the main app container
-        const app = document.querySelector('[data-testid="stApp"]') || document.querySelector('.stApp') || document.body;
-        const body = document.body;
-        
-        // Check both app and body background colors
-        const appBg = getBackgroundColor(app);
-        const bodyBg = getBackgroundColor(body);
-        
-        // Determine if we're in light mode based on background color
-        const isLightMode = isLightBackground(appBg) || isLightBackground(bodyBg);
-        
-        // Update logo based on background color
-        if (isLightMode) {
-            logoImg.src = 'cressey_logo_light.png';
-        } else {
-            logoImg.src = 'cressey_logo.png';
-        }
-        
-        // Debug info (you can remove this later)
-        console.log('App background:', appBg, 'Body background:', bodyBg, 'Is light:', isLightMode);
-    }
-    
-    // Run on page load
-    document.addEventListener('DOMContentLoaded', updateLogo);
-    
-    // Run when any style changes occur
-    const observer = new MutationObserver(updateLogo);
-    observer.observe(document.body, { 
-        attributes: true, 
-        attributeFilter: ['class', 'style'],
-        subtree: true 
-    });
-    
-    // Also observe the app container
-    const app = document.querySelector('[data-testid="stApp"]') || document.querySelector('.stApp');
-    if (app) {
-        observer.observe(app, { 
-            attributes: true, 
-            attributeFilter: ['class', 'style'] 
-        });
-    }
-    
-    // Run periodically to catch any missed changes
-    setInterval(updateLogo, 2000);
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Display the logo with a container class for JavaScript targeting
+    """Display logo - always dark mode since we're forcing dark theme"""
+    # Since we're forcing dark mode, always use the dark logo
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
-        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-        st.image("cressey_logo.png", width=400)  # Default logo (will be updated by JavaScript)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.image("cressey_logo.png", width=400)
 
 def athlete_sign_up_page():
     """Main athlete sign-up page"""
