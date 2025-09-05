@@ -497,12 +497,51 @@ This is an automated notification from the Bullpen Sign-up Portal.
         st.error(f"Error sending email notification: {str(e)}")
         return False
 
+def display_logo():
+    """Display logo based on current theme (dark/light mode)"""
+    # Use CSS to automatically switch logos based on theme
+    st.markdown("""
+    <style>
+    /* Default logo (dark mode) */
+    .logo-container img {
+        content: url('cressey_logo.png');
+    }
+    
+    /* Light mode logo - when body has light theme */
+    [data-testid="stApp"]:not([data-theme="dark"]) .logo-container img,
+    .stApp:not([data-theme="dark"]) .logo-container img {
+        content: url('cressey_logo_light.png');
+    }
+    
+    /* Alternative detection for light mode */
+    @media (prefers-color-scheme: light) {
+        .logo-container img {
+            content: url('cressey_logo_light.png');
+        }
+    }
+    
+    /* Force dark mode detection */
+    .stApp[style*="background-color: rgb(255, 255, 255)"],
+    .stApp[style*="background-color: #ffffff"],
+    .stApp[style*="background-color: white"] {
+        .logo-container img {
+            content: url('cressey_logo_light.png');
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Display the logo with a container class for CSS targeting
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    with col2:
+        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+        st.image("cressey_logo.png", width=400)  # Default logo (will be overridden by CSS)
+        st.markdown('</div>', unsafe_allow_html=True)
+
 def athlete_sign_up_page():
     """Main athlete sign-up page"""
     # Logo at the top
-    col1, col2, col3 = st.columns([1, 1.5, 1])
-    with col2:
-        st.image("cressey_logo.png", width=400)
+    display_logo()
     
     
     # Load settings and sign-ups
@@ -622,9 +661,7 @@ def athlete_sign_up_page():
 def admin_page():
     """Administrative page for managing signups and settings"""
     # Logo at the top
-    col1, col2, col3 = st.columns([1, 1.5, 1])
-    with col2:
-        st.image("cressey_logo.png", width=400)
+    display_logo()
     
     st.markdown('<h1 class="main-header">🔧 Admin Dashboard</h1>', unsafe_allow_html=True)
     
