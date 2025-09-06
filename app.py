@@ -648,7 +648,7 @@ def athlete_sign_up_page():
         
         # Notes section
         st.markdown("### Additional Notes (Optional)")
-        notes = st.text_area("Notes for your bullpen session:", placeholder="Any specific areas you want to work on, equipment needed, etc.", height=100)
+        notes = st.text_area("Notes for your bullpen session:", placeholder="Any specific areas you want to work on + notes for the bullpen", height=100)
         
         # Submit button
         submitted = st.form_submit_button("Submit Sign-up", type="primary")
@@ -1046,4 +1046,5 @@ def main():
             st.info("Enter admin password to access dashboard")
 
 if __name__ == "__main__":
+
     main()
