@@ -117,7 +117,7 @@ EMAIL_CONFIG = {
 # Default settings
 DEFAULT_SETTINGS = {
     "max_athletes_per_slot": 4,
-    "cutoff_hours": 14,
+    "cutoff_hours": 4,
     "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     "time_slots": [
         "9:00 AM", "9:15 AM", "9:30 AM", "9:45 AM",
@@ -643,7 +643,7 @@ def athlete_sign_up_page():
         
         # Time input
         st.markdown("### Select Time")
-        st.info("Must sign-up 14 hours in advance")
+        st.info("Please give enough notice for a bullpen time")
         selected_time = st.text_input("Choose Preferred Time (9:00 AM - 6:00 PM):", placeholder="10:15AM")
         
         # Notes section
@@ -1048,3 +1048,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
